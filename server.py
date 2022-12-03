@@ -50,9 +50,7 @@ while True: # Loop forever
             content = f.read()
             f.close()
 
-            # reply = 'HTTP/1.0 200 OK\n\n' + content
-
-            reply = struct.pack()
+            reply = 'HTTP/1.0 200 OK\n\n' + content
 
         except FileNotFoundError:
             reply = 'HTTP/1.1 404 Not Found\n\n404 Not Found'
