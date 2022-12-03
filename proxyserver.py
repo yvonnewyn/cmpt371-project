@@ -31,12 +31,10 @@ def getfile_cache(filename):
 
 def getfile_server(filename):
     try:
-        f = open('server/' + filename)
-        content = f.read()
-        f.close()
+        response = urlopen(Request('http://localhost:8000' + '/' + filename))
+        content = response.read().decode('utf-8')
         return content
-
-    except FileNotFoundError:
+    except HTTPError:
         return None
     
 def save_to_cache(filename, content):
@@ -47,7 +45,7 @@ def save_to_cache(filename, content):
 
 def main():
     serverHost = ''
-    serverPort = 8000
+    serverPort = 8001
 
     # Create TCP welcoming socket
     serverSocket = socket(AF_INET,SOCK_STREAM)
