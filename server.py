@@ -52,6 +52,8 @@ while True: # Loop forever
 
             reply = 'HTTP/1.0 200 OK\n\n' + content
 
+        # might have to reply with none instead???? since proxyserver sends the 404 not found????
+
         except FileNotFoundError:
             reply = 'HTTP/1.1 404 Not Found\n\n404 Not Found'
 
