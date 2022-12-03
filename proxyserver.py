@@ -85,14 +85,15 @@ def main():
             else:
                 filename = filename[1:]
 
-            try:
-                content = getfile(filename)
+            content = getfile(filename)
 
-                # reply = 'HTTP/1.0 200 OK\n\n' + content
+            # reply = 'HTTP/1.0 200 OK\n\n' + content
 
-                reply = struct.pack()
+            # reply = struct.pack()
 
-            except FileNotFoundError:
+            if content:
+                response = 'HTTP/1.0 200 OK\n\n' + content
+            else:
                 reply = 'HTTP/1.1 404 Not Found\n\n404 Not Found'
 
             # Send the reply
