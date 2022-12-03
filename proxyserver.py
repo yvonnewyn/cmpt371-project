@@ -21,7 +21,7 @@ def getfile(filename):
 
 def getfile_cache(filename):
     try:
-        f = open('cache' + filename)
+        f = open('cache/' + filename)
         content = f.read()
         f.close()
         return content
@@ -31,7 +31,7 @@ def getfile_cache(filename):
 
 def getfile_server(filename):
     try:
-        f = open('server' + filename)
+        f = open('server/' + filename)
         content = f.read()
         f.close()
         return content
