@@ -1,10 +1,10 @@
 # Include Python's Socket Library
 from socket import *
+import struct
 
 # Specify Server Port
 # serverHost = 'localhost'
 serverHost = ''
-
 serverPort = 8000
 
 # Create TCP welcoming socket
@@ -16,7 +16,7 @@ serverSocket.settimeout(10)
 serverSocket.bind((serverHost,serverPort))
 
 # Server begins listerning foor incoming TCP connections
-serverSocket.listen(1)
+serverSocket.listen(1) # change 1 to bigger number so connections are able to be queued up
 print ('Listening on port ', serverPort, '...')
 
 while True: # Loop forever
@@ -32,11 +32,12 @@ while True: # Loop forever
     print(request)
 
     if (request==''):
-        reply = 'HTTP/1.0 408 Request Timed Out\n\n408 Request Timed Out'
+        reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
 
     else:
         # Get HTTP header
-        header = request.split('\n')    
+        header = request.split('\n')  
+        method = header[0].split()[0]    
         filename = header[0].split()[1]
 
         if (filename == '/'):
@@ -45,23 +46,27 @@ while True: # Loop forever
             filename = filename[1:]
 
         try:
-            f = open(filename)
+            f = open('server/' + filename)
             content = f.read()
             f.close()
 
-            reply = 'HTTP/1.0 200 OK\n\n' + content
+            # reply = 'HTTP/1.0 200 OK\n\n' + content
+
+            reply = struct.pack()
 
         except FileNotFoundError:
-            reply = 'HTTP/1.0 404 Not Found\n\n404 Not Found'
+            reply = 'HTTP/1.1 404 Not Found\n\n404 Not Found'
 
         # Send the reply
         try:
             connectionSocket.sendall(reply.encode())
 
         except timeout:
-            reply = 'HTTP/1.0 408 Request Timed Out\n\n408 Request Timed Out'
+            reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
 
     # Close connection to client (but not welcoming socket)
     connectionSocket.close()
 
 serverSocket.close()
+
+
