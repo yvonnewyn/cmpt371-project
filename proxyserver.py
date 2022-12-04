@@ -2,7 +2,7 @@
 from socket import *
 from urllib.request import Request, urlopen, HTTPError
 import pathlib
-import datetime
+from datetime import datetime
 
 class BadRequest(Exception):
     pass
@@ -10,10 +10,29 @@ class BadRequest(Exception):
 def getfile(filename):
     f = getfile_cache(filename)
 
-    if f:
+    # in cache
+    if f: 
         print(filename, "in cache")
-        return f
+        # conditional get to see if need to get new version of file
+        # date = datetime.now()
+        # print("date: ", date)
+        # date = date.strftime('%a, %-d %b %Y %H:%M:%S')
+        # print("date: ", date)
+        date = "Wed, 1 Dec 2022 09:55:23"
+        f, code = conditionalget(filename, date)
+        if code == '200':
+            print('get new file from server and save to cache')
+            save_to_cache(filename, f)
+            return f
+        elif code =='304':
+            print('not modified')
+            return f
+        else:
+            print(filename, "doesn't exist")
+            return None
 
+
+    # not in cache
     else:
         print(filename, "not in cache")
         f = getfile_server(filename)
@@ -27,7 +46,7 @@ def getfile(filename):
 
 def getfile_cache(filename):
     try:
-        # firs
+        
         f = open('cache/' + filename)
         content = f.read()
         f.close()
@@ -53,9 +72,14 @@ def conditionalget(filename, date):
 
         clientSocket.close()
 
-        print(response.decode())
+        # print(response.decode('utf-8'))
 
-        return response.decode()
+        response = response.decode('utf-8')
+
+        header = response.split('\n')
+        code = header[0].split()[1]
+
+        return response, code
         
         
 
@@ -85,11 +109,11 @@ def request_info(request):
     date = ''
     header = request.split('\n')
 
-    for h in header:
-        if 'If-Modified-Since:' in h.split():
-            conditional_get = True
-            date = h.split()[1:]
-            date = ' '.join(date)
+    # for h in header:
+    #     if 'If-Modified-Since:' in h.split():
+    #         conditional_get = True
+    #         date = h.split()[1:]
+    #         date = ' '.join(date)
 
             
 
@@ -147,9 +171,9 @@ def main():
 
                 content = getfile(filename)
 
-                if c_get:
-                    reply = conditionalget(filename, date)
-                elif content:
+                # if c_get:
+                #     reply = conditionalget(filename, date)
+                if content:
                     reply = 'HTTP/1.1 200 OK\n\n' + content
                 else:
                     reply = 'HTTP/1.1 404 Not Found\n\n404 Not Found'

@@ -2,7 +2,7 @@
 from socket import *
 import struct
 import pathlib
-from datetime import datetime, timezone
+from datetime import datetime
 
 class BadRequest(Exception):
     pass
@@ -76,11 +76,10 @@ def main():
                 mdate = pathlib.Path('server/' + filename).stat().st_mtime
                 # mdate = datetime.fromtimestamp(mdate, tz=timezone.utc)
                 mdate = datetime.fromtimestamp(mdate).strftime('%a, %-d %b %Y %H:%M:%S')
-
-                date_time = datetime.strptime(date, '%a, %-d %b %Y %H:%M:%S')
-                mdate_time = datetime.strptime(mdate, '%a, %-d %b %Y %H:%M:%S')
+                date_time = datetime.strptime(date, '%a, %d %b %Y %H:%M:%S')
+                mdate_time = datetime.strptime(mdate, '%a, %d %b %Y %H:%M:%S')
                 # print(date, mdate)
-                if date <= mdate:
+                if mdate_time <= date_time:
                     reply = 'HTTP/1.1 304 Not Modified\n\n'
                 else:
                     f = open('server/' + filename)
