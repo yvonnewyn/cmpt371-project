@@ -1,27 +1,33 @@
 # Include Python's Socket Library
 from socket import *
 from urllib.request import Request, urlopen, HTTPError
+import pathlib
+import datetime
+
+class BadRequest(Exception):
+    pass
 
 def getfile(filename):
     f = getfile_cache(filename)
 
     if f:
-        print(filename, " in cache")
+        print(filename, "in cache")
         return f
 
     else:
-        print(filename, " not in cache")
+        print(filename, "not in cache")
         f = getfile_server(filename)
 
         if f:
             save_to_cache(filename, f)
             return f
         else:
-            print(filename, " doesn't exist")
+            print(filename, "doesn't exist")
             return None
 
 def getfile_cache(filename):
     try:
+        # firs
         f = open('cache/' + filename)
         content = f.read()
         f.close()
@@ -29,6 +35,35 @@ def getfile_cache(filename):
 
     except FileNotFoundError:
         return None
+
+def conditionalget(filename, date):
+    serverName = 'localhost'
+    serverPort = 8000
+    try:
+        request = f"GET / HTTP/1.1\r\nHost: localhost:8001\r\nIf-Modified-Since: " + date
+        # Create TCP Socket for Client
+        clientSocket = socket(AF_INET, SOCK_STREAM)
+
+        # Connect to TCP Server Socket
+        clientSocket.connect((serverName,serverPort))
+
+        clientSocket.sendall(request.encode())
+
+        response = clientSocket.recv(1024)
+
+        clientSocket.close()
+
+        print(response.decode())
+
+        return response.decode()
+        
+        
+
+    except FileNotFoundError:
+        return None
+    except HTTPError:
+        return None
+
 
 def getfile_server(filename):
     try:
@@ -44,9 +79,34 @@ def save_to_cache(filename, content):
     f.close()
     print("saving ", filename, " to cache")
 
+def request_info(request):
+    # valid_requests = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE']
+    conditional_get = False
+    date = ''
+    header = request.split('\n')
+
+    for h in header:
+        if 'If-Modified-Since:' in h.split():
+            conditional_get = True
+            date = h.split()[1:]
+            date = ' '.join(date)
+
+            
+
+    if 'HTTP' in header[0]:
+        method = header[0].split()[0]    
+        filename = header[0].split()[1]
+        # version = header[0].split()[2]
+
+        # if method in valid_requests:
+        if method == 'GET':
+            return filename, conditional_get, date
+
+        else:
+            raise BadRequest("Invalid request")
+    else:
+        raise BadRequest("Not HTTP")
     
-
-
 def main():
     serverHost = ''
     serverPort = 8001
@@ -54,7 +114,7 @@ def main():
     # Create TCP welcoming socket
     serverSocket = socket(AF_INET,SOCK_STREAM)
     serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    serverSocket.settimeout(10)
+    # serverSocket.settimeout(30)
 
     # Bind the server port to the socket
     serverSocket.bind((serverHost,serverPort))
@@ -66,46 +126,47 @@ def main():
     while True: # Loop forever
         # Server waits on accept for incoming requests.
         # New socket created on return
+        connectionSocket, addr = serverSocket.accept()
+
         try:
-            connectionSocket, addr = serverSocket.accept()
-        except timeout:
-            continue
+            # Read from socket
+            request = connectionSocket.recv(1024).decode()
+            print(request)
 
-        # Read from socket (but not address as in UDP)
-        request = connectionSocket.recv(1024).decode()
-        print(request)
-
-        if (request==''):
-            reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
-
-        else:
-            # Get HTTP header
-            header = request.split('\n')
-            method = header[0].split()[0]    
-            filename = header[0].split()[1]
-
-            if (filename == '/'):
-                filename = 'test.html'
-            else:
-                filename = filename[1:]
-
-            content = getfile(filename)
-
-            # reply = 'HTTP/1.0 200 OK\n\n' + content
-
-            # reply = struct.pack()
-
-            if content:
-                reply = 'HTTP/1.0 200 OK\n\n' + content
-            else:
-                reply = 'HTTP/1.1 404 Not Found\n\n404 Not Found'
-
-            # Send the reply
-            try:
-                connectionSocket.sendall(reply.encode())
-
-            except timeout:
+            if (request==''):
+                print('no request')
                 reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
+
+            else:
+                filename, c_get, date = request_info(request)
+
+                if (filename == '/'):
+                    filename = 'test.html'
+                else:
+                    filename = filename[1:]
+
+                content = getfile(filename)
+
+                if c_get:
+                    reply = conditionalget(filename, date)
+                elif content:
+                    reply = 'HTTP/1.1 200 OK\n\n' + content
+                else:
+                    reply = 'HTTP/1.1 404 Not Found\n\n404 Not Found'
+        except timeout:
+            print("timed out")
+            reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
+        except BadRequest:
+            reply = 'HTTP/1.1 400 Bad Request\n\n400 Bad Request'
+
+
+        # Send the reply
+        # try:
+        connectionSocket.sendall(reply.encode())
+        # print("reply sent: ", reply)
+
+        # except timeout:
+        #     reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
 
         # Close connection to client (but not welcoming socket)
         connectionSocket.close()

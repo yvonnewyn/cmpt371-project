@@ -3,7 +3,11 @@ from socket import *
 
 # Specify Server Address
 serverName = 'localhost'
-serverPort = 8000
+serverPort = 8001
+
+date = "Wed, 30 Nov 2022 09:55:23"
+request = f"GET / HTTP/1.1\r\nHost: localhost:8001\r\nIf-Modified-Since: " + date
+
 
 # Create TCP Socket for Client
 clientSocket = socket(AF_INET, SOCK_STREAM)
@@ -11,17 +15,16 @@ clientSocket = socket(AF_INET, SOCK_STREAM)
 # Connect to TCP Server Socket
 clientSocket.connect((serverName,serverPort))
 
-# Recieve user input from keyboard
-sentence = input('Input lowercase sentence:')
+
 
 # Send! No need to specify Server Name and Server Port! Why?
-clientSocket.send(sentence.encode())
+clientSocket.send(request.encode())
 
 # Read reply characters! No need to read address! Why?
-modifiedSentence = clientSocket.recv(1024)
+response = clientSocket.recv(1024)
 
 # Print out the received string
-print ('From Server:', modifiedSentence.decode())
+print ('From Server:', response.decode())
 
 # Close the socket
 clientSocket.close()

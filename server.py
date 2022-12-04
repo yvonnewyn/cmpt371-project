@@ -1,61 +1,103 @@
 # Include Python's Socket Library
 from socket import *
 import struct
+import pathlib
+from datetime import datetime, timezone
 
-# Specify Server Port
-# serverHost = 'localhost'
-serverHost = ''
-serverPort = 8000
+class BadRequest(Exception):
+    pass
 
-# Create TCP welcoming socket
-serverSocket = socket(AF_INET,SOCK_STREAM)
-serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-serverSocket.settimeout(10)
+def request_info(request):
+    # valid_requests = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE']
+    conditional_get = False
+    date = ''
+    header = request.split('\n')
 
-# Bind the server port to the socket
-serverSocket.bind((serverHost,serverPort))
+    for h in header:
+        if 'If-Modified-Since:' in h.split():
+            conditional_get = True
+            date = h.split()[1:]
+            date = ' '.join(date) 
 
-# Server begins listerning foor incoming TCP connections
-serverSocket.listen(1) # change 1 to bigger number so connections are able to be queued up
-print ('Listening on port ', serverPort, '...')
-
-while True: # Loop forever
-    # Server waits on accept for incoming requests.
-    # New socket created on return
-    try:
-        connectionSocket, addr = serverSocket.accept()
-    except timeout:
-        continue
-
-    # Read from socket (but not address as in UDP)
-    request = connectionSocket.recv(1024).decode()
-    print(request)
-
-    if (request==''):
-        reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
-
-    else:
-        # Get HTTP header
-        header = request.split('\n')  
+    if 'HTTP' in header[0]:
         method = header[0].split()[0]    
         filename = header[0].split()[1]
+        # version = header[0].split()[2]
 
-        if (filename == '/'):
-            filename = 'test.html'
+        # if method in valid_requests:
+        if method == 'GET':
+            return filename, conditional_get, date
+
         else:
-            filename = filename[1:]
+            raise BadRequest("Invalid request")
+    else:
+        raise BadRequest("Not HTTP")
 
-        try:
-            f = open('server/' + filename)
-            content = f.read()
-            f.close()
+def main():
 
-            reply = 'HTTP/1.0 200 OK\n\n' + content
+    # Specify Server Port
+    # serverHost = 'localhost'
+    serverHost = ''
+    serverPort = 8000
 
-        # might have to reply with none instead???? since proxyserver sends the 404 not found????
+    # Create TCP welcoming socket
+    serverSocket = socket(AF_INET,SOCK_STREAM)
+    serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    # serverSocket.settimeout(30)
 
-        except FileNotFoundError:
-            reply = 'HTTP/1.1 404 Not Found\n\n404 Not Found'
+    # Bind the server port to the socket
+    serverSocket.bind((serverHost,serverPort))
+
+    # Server begins listerning foor incoming TCP connections
+    serverSocket.listen(1) # change 1 to bigger number so connections are able to be queued up
+    print ('Listening on port ', serverPort, '...')
+
+    while True: # Loop forever
+        # Server waits on accept for incoming requests.
+        # New socket created on return
+        connectionSocket, addr = serverSocket.accept()
+
+        # Read from socket (but not address as in UDP)
+        request = connectionSocket.recv(1024).decode()
+        print(request)
+
+        if (request==''):
+            reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
+
+        else:
+            filename, c_get, date = request_info(request)
+
+            if (filename == '/'):
+                filename = 'test.html'
+            else:
+                filename = filename[1:]
+
+            if c_get:
+                mdate = pathlib.Path('server/' + filename).stat().st_mtime
+                # mdate = datetime.fromtimestamp(mdate, tz=timezone.utc)
+                mdate = datetime.fromtimestamp(mdate).strftime('%a, %-d %b %Y %H:%M:%S')
+
+                date_time = datetime.strptime(date, '%a, %-d %b %Y %H:%M:%S')
+                mdate_time = datetime.strptime(mdate, '%a, %-d %b %Y %H:%M:%S')
+                # print(date, mdate)
+                if date <= mdate:
+                    reply = 'HTTP/1.1 304 Not Modified\n\n'
+                else:
+                    f = open('server/' + filename)
+                    content = f.read()
+                    f.close()
+                    reply = 'HTTP/1.1 200 OK\n\n' + content
+    
+            else:
+                try:
+                    f = open('server/' + filename)
+                    content = f.read()
+                    f.close()
+
+                    reply = 'HTTP/1.1 200 OK\n\n' + content
+
+                except FileNotFoundError:
+                    reply = 'HTTP/1.1 404 Not Found\n\n404 Not Found'
 
         # Send the reply
         try:
@@ -64,9 +106,10 @@ while True: # Loop forever
         except timeout:
             reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
 
-    # Close connection to client (but not welcoming socket)
-    connectionSocket.close()
+        # Close connection to client (but not welcoming socket)
+        connectionSocket.close()
 
-serverSocket.close()
+    serverSocket.close()
 
-
+if __name__=='__main__':
+    main()
