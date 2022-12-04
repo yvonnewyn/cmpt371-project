@@ -1,5 +1,6 @@
 # Include Python's Socket Library
 from socket import *
+from urllib.request import Request, urlopen, HTTPError
 
 def getfile(filename):
     f = getfile_cache(filename)
@@ -14,7 +15,7 @@ def getfile(filename):
 
         if f:
             save_to_cache(filename, f)
-            return filename
+            return f
         else:
             print(filename, " doesn't exist")
             return None
@@ -38,6 +39,9 @@ def getfile_server(filename):
         return None
     
 def save_to_cache(filename, content):
+    f = open('cache/' + filename, 'w')
+    f.write(content)
+    f.close()
     print("saving ", filename, " to cache")
 
     
@@ -92,7 +96,7 @@ def main():
             # reply = struct.pack()
 
             if content:
-                response = 'HTTP/1.0 200 OK\n\n' + content
+                reply = 'HTTP/1.0 200 OK\n\n' + content
             else:
                 reply = 'HTTP/1.1 404 Not Found\n\n404 Not Found'
 
@@ -107,3 +111,6 @@ def main():
         connectionSocket.close()
 
     serverSocket.close()
+
+if __name__=='__main__':
+    main()
