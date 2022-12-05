@@ -20,9 +20,9 @@ def getfile(filename):
         # print("date: ", date)
         date = "Wed, 6 Dec 2022 09:55:23"
         f2, code = conditionalget(filename, date)
-        print("response:", f)
+        print("response:", f2, " ----------------------------response end")
         f2 = f2.split('\n')[1:]
-        f2 = '\n'.join(f)
+        f2 = '\n'.join(f2)
         if code == '200':
             print('get new file from server and save to cache')
             save_to_cache(filename, f2)
@@ -169,6 +169,8 @@ def main():
 
                 if (filename == '/'):
                     filename = 'test.html'
+                elif (filename =='/favicon.ico'):
+                    continue
                 else:
                     filename = filename[1:]
 
@@ -189,7 +191,7 @@ def main():
 
         # Send the reply
         # try:
-        print(reply)
+        # print(reply)
         connectionSocket.sendall(reply.encode())
         # print("reply sent: ", reply)
 
