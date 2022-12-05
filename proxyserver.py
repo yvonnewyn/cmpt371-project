@@ -161,7 +161,7 @@ def main():
 
             if (request==''):
                 print('no request')
-                reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
+                reply = 'HTTP/1.1 400 Request Timed Out\r\nConnection: Close\n\n408 Request Timed Out'
 
             else:
                 filename, c_get, date = request_info(request)
@@ -188,6 +188,7 @@ def main():
 
         # Send the reply
         # try:
+        print(reply)
         connectionSocket.sendall(reply.encode())
         # print("reply sent: ", reply)
 
