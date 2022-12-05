@@ -6,7 +6,7 @@ serverName = 'localhost'
 serverPort = 8001
 
 date = "Wed, 30 Nov 2022 09:55:23"
-request = f"GET / HTTP/1.1\r\nHost: localhost:8001\r\nIf-Modified-Since: " + date
+request = f"PUT / HTTP/1.1\r\nHost: localhost:8001\r\nIf-Modified-Since: " + date
 
 
 # Create TCP Socket for Client

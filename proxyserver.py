@@ -20,6 +20,8 @@ def getfile(filename):
         # print("date: ", date)
         date = "Wed, 1 Dec 2022 09:55:23"
         f, code = conditionalget(filename, date)
+        f = f.split('\n')[1:]
+        f = '\n'.join(f)
         if code == '200':
             print('get new file from server and save to cache')
             save_to_cache(filename, f)
