@@ -18,16 +18,17 @@ def getfile(filename):
         # print("date: ", date)
         # date = date.strftime('%a, %-d %b %Y %H:%M:%S')
         # print("date: ", date)
-        date = "Wed, 1 Dec 2022 09:55:23"
-        f, code = conditionalget(filename, date)
-        f = f.split('\n')[1:]
-        f = '\n'.join(f)
+        date = "Wed, 6 Dec 2022 09:55:23"
+        f2, code = conditionalget(filename, date)
+        print("response:", f)
+        f2 = f2.split('\n')[1:]
+        f2 = '\n'.join(f)
         if code == '200':
             print('get new file from server and save to cache')
-            save_to_cache(filename, f)
-            return f
+            save_to_cache(filename, f2)
+            return f2
         elif code =='304':
-            print('not modified')
+            print('not modified', f)
             return f
         else:
             print(filename, "doesn't exist")
