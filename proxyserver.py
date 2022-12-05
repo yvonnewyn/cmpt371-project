@@ -20,7 +20,7 @@ def getfile(filename):
         # print("date: ", date)
         date = "Wed, 6 Dec 2022 09:55:23"
         f2, code = conditionalget(filename, date)
-        print("response:", f2, " ----------------------------response end")
+        print(f2)
         f2 = f2.split('\n')[1:]
         f2 = '\n'.join(f2)
         if code == '200':
@@ -28,7 +28,7 @@ def getfile(filename):
             save_to_cache(filename, f2)
             return f2
         elif code =='304':
-            print('not modified', f)
+            # print('not modified')
             return f
         else:
             print(filename, "doesn't exist")

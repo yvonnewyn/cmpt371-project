@@ -104,6 +104,8 @@ def main():
 
         except timeout:
             reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
+        except BadRequest:
+            reply = 'HTTP/1.1 400 Bad Request\n\n400 Bad Request'
 
         # Close connection to client (but not welcoming socket)
         connectionSocket.close()
