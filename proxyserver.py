@@ -18,13 +18,16 @@ def getfile(filename):
         # print("date: ", date)
         # date = date.strftime('%a, %-d %b %Y %H:%M:%S')
         # print("date: ", date)
-        date = "Wed, 6 Dec 2022 09:55:23"
+        # date = "Wed, 5 Dec 2022 09:55:23"
+        date = pathlib.Path('cache/' + filename).stat().st_mtime
+        date = datetime.fromtimestamp(date).strftime('%a, %-d %b %Y %H:%M:%S')
+
         f2, code = conditionalget(filename, date)
         print(f2)
         f2 = f2.split('\n')[1:]
         f2 = '\n'.join(f2)
         if code == '200':
-            print('get new file from server and save to cache')
+            print('get new', filename, 'from server and save to cache')
             save_to_cache(filename, f2)
             return f2
         elif code =='304':
