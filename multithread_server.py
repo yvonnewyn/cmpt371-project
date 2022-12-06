@@ -109,7 +109,7 @@ def main():
     serverSocket.bind((serverHost,serverPort))
 
     # Server begins listerning foor incoming TCP connections
-    serverSocket.listen(5) # change 1 to bigger number so connections are able to be queued up
+    serverSocket.listen(5)
     print ('Listening on port ', serverPort, '...')
 
     while True: # Loop forever
@@ -117,6 +117,8 @@ def main():
         # New socket created on return
         try:
             connectionSocket, addr = serverSocket.accept()
+            connectionSocket.settimeout(5)
+
             print(addr)
 
             newServerThread = threading.Thread(target=newTCPServerThread, args=[connectionSocket])
@@ -124,6 +126,12 @@ def main():
             threads.append(newServerThread)
             newServerThread.start()
             
+        
+        except timeout:
+            print("timed out")
+            reply = 'HTTP/1.1 408 Request Timed Out\r\nConnection: close\n\n408 Request Timed Out'
+        except BadRequest:
+            reply = 'HTTP/1.1 400 Bad Request\n\n400 Bad Request'
         except KeyboardInterrupt:
 	        break
 

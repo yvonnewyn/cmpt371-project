@@ -49,7 +49,7 @@ def main():
     serverSocket.bind((serverHost,serverPort))
 
     # Server begins listerning foor incoming TCP connections
-    serverSocket.listen(1) # change 1 to bigger number so connections are able to be queued up
+    serverSocket.listen(1) 
     print ('Listening on port ', serverPort, '...')
 
     while True: # Loop forever
@@ -57,12 +57,15 @@ def main():
         # New socket created on return
         try:
             connectionSocket, addr = serverSocket.accept()
-            connectionSocket.settimeout(5)
+            connectionSocket.settimeout(0.05)
 
             try:
                 # Read from socket (but not address as in UDP)
                 
-                request = connectionSocket.recv(1024).decode()
+                request = connectionSocket.recv(1024)
+                if not request:
+                    print('timeout!!')
+                request = request.decode()
                 print(request)
 
                 if (request==''):
@@ -105,6 +108,8 @@ def main():
 
             except BadRequest:
                 reply = 'HTTP/1.1 400 Bad Request\n\n400 Bad Request'
+            except timeout:
+                reply = 'HTTP/1.1 408 Request Timed Out\r\nConnection: close\n\n408 Request Timed Out'
 
             connectionSocket.sendall(reply.encode())
 

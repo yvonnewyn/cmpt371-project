@@ -150,7 +150,7 @@ def main():
     serverSocket.bind((serverHost,serverPort))
 
     # Server begins listerning foor incoming TCP connections
-    serverSocket.listen(1) # change 1 to bigger number so connections are able to be queued up
+    serverSocket.listen(1) 
     print ('Proxy server is listening on port ', serverPort, '...')
 
     while True: # Loop forever
@@ -158,6 +158,8 @@ def main():
         # New socket created on return
         try:
             connectionSocket, addr = serverSocket.accept()
+            connectionSocket.settimeout(5)
+
 
             try:
                 # Read from socket
@@ -188,7 +190,7 @@ def main():
                         reply = 'HTTP/1.1 404 Not Found\n\n404 Not Found'
             except timeout:
                 print("timed out")
-                reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
+                reply = 'HTTP/1.1 408 Request Timed Out\r\nConnection: close\n\n408 Request Timed Out'
             except BadRequest:
                 reply = 'HTTP/1.1 400 Bad Request\n\n400 Bad Request'
         
