@@ -4,6 +4,8 @@ import struct
 import pathlib
 from datetime import datetime
 import threading
+import time
+
 
 # threading.Thread(target, args)
 
@@ -12,15 +14,25 @@ threads = []
 class BadRequest(Exception):
     pass
 
-def newTCPServerThread(connectionSocket):
+def newTCPServerThread(connectionSocket, start):
 
         print(len(threads))
 
-        request = connectionSocket.recv(1024).decode()
-        # print(request)
+        request = connectionSocket.recv(1024)
+        print(request)
 
-        if (request==''):
-            reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
+        if not request:
+            print('timeout')
+            reply = 'HTTP/1.1 408 Request Timed Out\r\nConnection: close\n\n408 Request Timed Out'
+        request = request.decode()
+        end = time.time()
+
+        if (end-start)>60:
+            reply = 'HTTP/1.1 408 Request Timed Out\r\nConnection: close\n\n408 Request Timed Out'
+            connectionSocket.sendall(reply.encode())
+            # Close connection to client (but not welcoming socket)
+            connectionSocket.close() 
+            return
 
         else:
             filename, c_get, date = request_info(request)
@@ -111,17 +123,20 @@ def main():
     # Server begins listerning foor incoming TCP connections
     serverSocket.listen(5)
     print ('Listening on port ', serverPort, '...')
+    start = time.time()
 
     while True: # Loop forever
         # Server waits on accept for incoming requests.
         # New socket created on return
         try:
             connectionSocket, addr = serverSocket.accept()
+            
+
             connectionSocket.settimeout(5)
 
             print(addr)
 
-            newServerThread = threading.Thread(target=newTCPServerThread, args=[connectionSocket])
+            newServerThread = threading.Thread(target=newTCPServerThread, args=[connectionSocket, start])
             # newServerThread = threading.Thread(target=newTCPServerThread, args=[serverSocket])
             threads.append(newServerThread)
             newServerThread.start()
@@ -134,6 +149,7 @@ def main():
             reply = 'HTTP/1.1 400 Bad Request\n\n400 Bad Request'
         except KeyboardInterrupt:
 	        break
+        start = time.time()
 
     for t in threads:
         t.join()

@@ -3,6 +3,8 @@ from socket import *
 from urllib.request import Request, urlopen, HTTPError
 import pathlib
 from datetime import datetime
+import time
+
 
 class BadRequest(Exception):
     pass
@@ -152,6 +154,8 @@ def main():
     # Server begins listerning foor incoming TCP connections
     serverSocket.listen(1) 
     print ('Proxy server is listening on port ', serverPort, '...')
+    start = time.time()
+
 
     while True: # Loop forever
         # Server waits on accept for incoming requests.
@@ -163,12 +167,21 @@ def main():
 
             try:
                 # Read from socket
-                request = connectionSocket.recv(1024).decode()
+                request = connectionSocket.recv(1024)
                 print(request)
 
-                if (request==''):
-                    print('no request')
-                    reply = 'HTTP/1.1 400 Request Timed Out\r\nConnection: Close\n\n408 Request Timed Out'
+                if not request:
+                    print('timeout')
+                    reply = 'HTTP/1.1 408 Request Timed Out\r\nConnection: close\n\n408 Request Timed Out'
+                request = request.decode()
+                end = time.time()
+
+                if (end-start)>60:
+                    reply = 'HTTP/1.1 408 Request Timed Out\r\nConnection: close\n\n408 Request Timed Out'
+                    connectionSocket.sendall(reply.encode())
+                    # Close connection to client (but not welcoming socket)
+                    connectionSocket.close() 
+                    continue
 
                 else:
                     filename, c_get, date = request_info(request)
@@ -198,6 +211,8 @@ def main():
             # try:
             # print(reply)
             connectionSocket.sendall(reply.encode())
+            start = time.time()
+
             # print("reply sent: ", reply)
 
             # except timeout:
