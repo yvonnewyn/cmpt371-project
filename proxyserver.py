@@ -156,53 +156,55 @@ def main():
     while True: # Loop forever
         # Server waits on accept for incoming requests.
         # New socket created on return
-        connectionSocket, addr = serverSocket.accept()
-
         try:
-            # Read from socket
-            request = connectionSocket.recv(1024).decode()
-            print(request)
+            connectionSocket, addr = serverSocket.accept()
 
-            if (request==''):
-                print('no request')
-                reply = 'HTTP/1.1 400 Request Timed Out\r\nConnection: Close\n\n408 Request Timed Out'
+            try:
+                # Read from socket
+                request = connectionSocket.recv(1024).decode()
+                print(request)
 
-            else:
-                filename, c_get, date = request_info(request)
+                if (request==''):
+                    print('no request')
+                    reply = 'HTTP/1.1 400 Request Timed Out\r\nConnection: Close\n\n408 Request Timed Out'
 
-                if (filename == '/'):
-                    filename = 'test.html'
-                elif (filename =='/favicon.ico'):
-                    continue
                 else:
-                    filename = filename[1:]
+                    filename, c_get, date = request_info(request)
 
-                content = getfile(filename)
+                    if (filename == '/'):
+                        filename = 'test.html'
+                    elif (filename =='/favicon.ico'):
+                        continue
+                    else:
+                        filename = filename[1:]
 
-                # if c_get:
-                #     reply = conditionalget(filename, date)
-                if content:
-                    reply = 'HTTP/1.1 200 OK\n\n' + content
-                else:
-                    reply = 'HTTP/1.1 404 Not Found\n\n404 Not Found'
-        except timeout:
-            print("timed out")
-            reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
-        except BadRequest:
-            reply = 'HTTP/1.1 400 Bad Request\n\n400 Bad Request'
+                    content = getfile(filename)
 
+                    # if c_get:
+                    #     reply = conditionalget(filename, date)
+                    if content:
+                        reply = 'HTTP/1.1 200 OK\n\n' + content
+                    else:
+                        reply = 'HTTP/1.1 404 Not Found\n\n404 Not Found'
+            except timeout:
+                print("timed out")
+                reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
+            except BadRequest:
+                reply = 'HTTP/1.1 400 Bad Request\n\n400 Bad Request'
+        
+            # Send the reply
+            # try:
+            # print(reply)
+            connectionSocket.sendall(reply.encode())
+            # print("reply sent: ", reply)
 
-        # Send the reply
-        # try:
-        # print(reply)
-        connectionSocket.sendall(reply.encode())
-        # print("reply sent: ", reply)
+            # except timeout:
+            #     reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
 
-        # except timeout:
-        #     reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
-
-        # Close connection to client (but not welcoming socket)
-        connectionSocket.close()
+            # Close connection to client (but not welcoming socket)
+            connectionSocket.close()
+        except KeyboardInterrupt:
+            break
 
     serverSocket.close()
 

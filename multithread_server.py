@@ -13,13 +13,11 @@ class BadRequest(Exception):
     pass
 
 def newTCPServerThread(connectionSocket):
-    # Read from socket (but not address as in UDP)
-        # connectionSocket, addr = serverSocket.accept()
 
         print(len(threads))
 
         request = connectionSocket.recv(1024).decode()
-        print(request)
+        # print(request)
 
         if (request==''):
             reply = 'HTTP/1.1 408 Request Timed Out\n\n408 Request Timed Out'
@@ -117,17 +115,21 @@ def main():
     while True: # Loop forever
         # Server waits on accept for incoming requests.
         # New socket created on return
-        connectionSocket, addr = serverSocket.accept()
-        print(addr)
+        try:
+            connectionSocket, addr = serverSocket.accept()
+            print(addr)
 
-        newServerThread = threading.Thread(target=newTCPServerThread, args=[connectionSocket])
-        # newServerThread = threading.Thread(target=newTCPServerThread, args=[serverSocket])
-
-        newServerThread.start()
-        threads.append(newServerThread)
+            newServerThread = threading.Thread(target=newTCPServerThread, args=[connectionSocket])
+            # newServerThread = threading.Thread(target=newTCPServerThread, args=[serverSocket])
+            threads.append(newServerThread)
+            newServerThread.start()
+            
+        except KeyboardInterrupt:
+	        break
 
     for t in threads:
         t.join()
+
     serverSocket.close()
 
 if __name__=='__main__':
